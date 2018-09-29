@@ -1,8 +1,8 @@
 /*
  * Nicholas Berriochoa
  * 9 March 2018
- * CSC 453: Assignment 4
- * Description: Read a linux ext2 file system
+ * Description: Read an ext2 file system and print directory information
+ *              or print a file
  */
 
 #include <stdio.h>
@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h> /* strcmp */
 
-#include "program4.h"
+#include "ext2reader.h"
 #include "ext2.h"
 
 FILE *fp;
@@ -100,20 +100,18 @@ void print_usage(void) {
  */
 void find_inode(inode *data, uint32_t inode_number) {
    /* https://wiki.osdev.org/Ext2 */
-   
    uint16_t block_group      = (inode_number - 1) / sb.s_inodes_per_group;
    uint16_t index            = (inode_number - 1) % sb.s_inodes_per_group;
    uint16_t containing_block = (index * sizeof(inode)) / MAX_OFFSET;
    uint16_t offset           = index * sizeof(inode) % MAX_OFFSET;
    uint32_t block            = BASE_BLOCKS +
-                               (2*sb.s_blocks_per_group * block_group) +
+                               (2 * sb.s_blocks_per_group * block_group) +
                                containing_block;
 
    read_data(block, offset, (uint8_t *)data, sizeof(inode));
 }
 
 void traverse(inode *data, char *path) {
-   
    dir_entry *entry;
    uint8_t block[BLOCK_SIZE];
    uint8_t curr_block = 0;
@@ -177,7 +175,6 @@ void print_dir(inode data) {
       entry = (void *)block;
       
       while (entry->inode) {
-         printf("inode: %d\n", entry->inode);
          print_name(entry->name, entry->name_len);
          find_inode(&meta, entry->inode);
          print_meta_data(meta);
@@ -193,11 +190,11 @@ void print_dir(inode data) {
    }
    
    /* check the singly indirect blocks */
-   read_data(data.i_block[EXT2_NDIR_BLOCKS]*2, 0, (uint8_t *)s_indirect, BLOCK_SIZE);
+   read_data(data.i_block[EXT2_NDIR_BLOCKS] * 2, 0, (uint8_t *)s_indirect, BLOCK_SIZE);
    address = (void *)s_indirect;
    
    for (curr_addr = 0; curr_addr < ADDR_PER_BLOCK; curr_addr++) {
-      read_data(address[curr_addr]*2, 0, (uint8_t *)block, BLOCK_SIZE);
+      read_data(address[curr_addr] * 2, 0, (uint8_t *)block, BLOCK_SIZE);
       
       entry = (void *)block;
       while ((void *)entry != (void *)&block[BLOCK_SIZE]) {

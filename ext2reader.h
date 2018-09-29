@@ -1,5 +1,5 @@
-#ifndef PROGRAM4_H
-#define PROGRAM4_H
+#ifndef EXT2READER_H
+#define EXT2READER_H
 
 #include "ext2.h"
 
